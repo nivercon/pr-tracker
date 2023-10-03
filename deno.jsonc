@@ -1,0 +1,9 @@
+{
+  "fmt": {
+    "lineWidth": 120
+  },
+  "tasks": {
+    "dev": "deno run -A --unstable --watch mod.ts",
+    "start": "deno run -A --unstable mod.ts"
+  }
+}
