@@ -20,8 +20,8 @@ app.use((ctx, next) => {
   return next();
 });
 
-app.use(router.allowedMethods());
 app.use(router.routes());
+app.use(router.allowedMethods());
 
 app.addEventListener("listen", ({ port }) => {
   console.log(`Listening on port ${port}`);
