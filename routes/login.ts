@@ -107,13 +107,13 @@ export const login: RouterMiddleware = async (ctx) => {
   const ok = new Octokit({ auth: authInfo.accessToken });
   const user = await ok.rest.users.getAuthenticated();
 
-  const userKey = ["user", user.data.id];
+  const userKey = ["user", user.data.login];
   const saveUser = await kv.atomic().check({ key: userKey, versionstamp: null }).set(userKey, {
     authInfo,
     user: user.data,
   }).commit();
 
-  if (saveUser.ok) await kv.enqueue({ type: MessageTypes.FETCH_PRS, userId: user.data.id });
+  if (saveUser.ok) await kv.enqueue({ type: MessageTypes.FETCH_PRS, userId: user.data.login });
 
   return ctx.response.redirect(config.welcomeUrl);
 };

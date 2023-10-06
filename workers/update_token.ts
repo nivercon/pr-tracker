@@ -25,6 +25,6 @@ export const updateTokensWorker = (kv: Deno.Kv) => async (msg: unknown) => {
   await kv.set(["user", user.user.id], { authInfo, user: user.user });
 
   if (msg.nextTask) {
-    await kv.enqueue({ type: msg.nextTask, userId: user.user.id });
+    await kv.enqueue({ type: msg.nextTask, userId: user.user.login });
   }
 };

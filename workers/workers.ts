@@ -7,7 +7,7 @@ export const enum MessageTypes {
 
 export type Message = {
   type: MessageTypes;
-  userId: number;
+  userId: string;
   nextTask?: MessageTypes;
 };
 
