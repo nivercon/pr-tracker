@@ -12,6 +12,11 @@ export type Message = {
 };
 
 export async function registerWorkers(kv: Deno.Kv) {
-  await kv.listenQueue(fetchPrsWorker(kv));
-  await kv.listenQueue(updateTokensWorker(kv));
+  const fetchPrs = fetchPrsWorker(kv);
+  const updateToken = updateTokensWorker(kv);
+
+  await kv.listenQueue(async (msg) => {
+    await fetchPrs(msg);
+    await updateToken(msg);
+  });
 }
