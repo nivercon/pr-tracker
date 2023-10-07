@@ -8,8 +8,11 @@ const isUpdateTokensMessage = (msg: unknown): msg is Message =>
 export const updateTokensWorker = (kv: Deno.Kv) => async (msg: unknown) => {
   if (!isUpdateTokensMessage(msg)) return;
 
+  console.log("updating tokens for", msg.userId);
   const user = await kv.get<{ authInfo: AuthInfo; user: User }>(["user", msg.userId]).then((value) => value?.value);
   if (!user) return;
+
+  console.log("found user data");
 
   const url = new URL("https://github.com/login/oauth/access_token");
   url.searchParams.append("client_id", config.clientId);
@@ -22,9 +25,16 @@ export const updateTokensWorker = (kv: Deno.Kv) => async (msg: unknown) => {
   const responseBody = Object.fromEntries(await response.formData().then((data) => data.entries()));
   const authInfo = AuthInfo.parse(responseBody);
 
+  console.log("got new tokens");
+
   await kv.set(["user", user.user.id], { authInfo, user: user.user });
 
+  console.log("updated tokens");
+
   if (msg.nextTask) {
+    console.log("enqueuing next task", msg.nextTask);
     await kv.enqueue({ type: msg.nextTask, userId: user.user.login });
   }
+
+  console.log("done");
 };
