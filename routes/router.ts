@@ -1,5 +1,6 @@
 import { oak } from "../deps.ts";
 import { AppState } from "../mod.ts";
+import { MessageTypes } from "../workers/workers.ts";
 import { login } from "./login.ts";
 import { pulls } from "./pulls.ts";
 
@@ -14,3 +15,8 @@ export const router = new oak.Router({
 
 router.get("/login", login);
 router.get("/pulls", pulls);
+router.get("/fetch/:username", async (ctx) => {
+  const { kv } = ctx.state;
+  await kv.enqueue({ type: MessageTypes.FETCH_PRS, userId: ctx.params.username });
+  ctx.response.status = 204;
+});
