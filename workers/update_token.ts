@@ -6,6 +6,7 @@ const isUpdateTokensMessage = (msg: unknown): msg is Message =>
   typeof msg === "object" && msg !== null && "type" in msg && msg["type"] === MessageTypes.UPDATE_TOKEN;
 
 export const updateTokensWorker = (kv: Deno.Kv) => async (msg: unknown) => {
+  console.log("updateTokensWorker", isUpdateTokensMessage(msg), msg);
   if (!isUpdateTokensMessage(msg)) return;
 
   console.log("updating tokens for", msg.userId);
