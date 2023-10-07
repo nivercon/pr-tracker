@@ -63,6 +63,9 @@ async function validateState(kv: Deno.Kv, state: string | null) {
   const storedTimestamp = await kv.get(["state", uuid]).then((entry) => entry.value);
 
   if (!storedTimestamp) throw oak.createHttpError(400, "Invalid state parameter");
+
+  await kv.delete(["state", uuid]);
+
   if (timestamp !== storedTimestamp) {
     throw oak.createHttpError(400, `Invalid timestamp (${timestamp} vs ${storedTimestamp})`);
   }
