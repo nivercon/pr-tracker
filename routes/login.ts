@@ -108,12 +108,12 @@ export const login: RouterMiddleware = async (ctx) => {
   const user = await ok.rest.users.getAuthenticated();
 
   const userKey = ["user", user.data.login];
-  const saveUser = await kv.atomic().check({ key: userKey, versionstamp: null }).set(userKey, {
+  await kv.atomic().check({ key: userKey, versionstamp: null }).set(userKey, {
     authInfo,
     user: user.data,
   }).commit();
 
-  if (saveUser.ok) await kv.enqueue({ type: MessageTypes.FETCH_PRS, userId: user.data.login });
+  await kv.enqueue({ type: MessageTypes.FETCH_PRS, userId: user.data.login });
 
   return ctx.response.redirect(config.welcomeUrl);
 };
