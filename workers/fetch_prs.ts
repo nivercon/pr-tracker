@@ -33,16 +33,23 @@ const isPrMessage = (msg: unknown): msg is Message =>
 export const fetchPrsWorker = (kv: Deno.Kv) => async (msg: unknown) => {
   if (!isPrMessage(msg)) return;
 
+  console.log("fetching prs for", msg.userId);
+
   const { userId } = msg;
   const userData = await kv.get<{ authInfo: AuthInfo; user: User }>(["user", userId]).then((value) => value?.value);
   if (!userData) return;
 
+  console.log("found user data");
+
   const { accessToken, expiresAt } = userData.authInfo;
 
   if (expiresAt <= Date.now()) {
+    console.log("token expired, updating");
     await kv.enqueue({ type: MessageTypes.UPDATE_TOKEN, userId: msg.userId, nextTask: MessageTypes.FETCH_PRS });
     return;
   }
+
+  console.log("token valid, fetching prs");
 
   const ok = new Octokit({ auth: accessToken });
   const response = await ok.graphql(gql`{
@@ -84,15 +91,25 @@ export const fetchPrsWorker = (kv: Deno.Kv) => async (msg: unknown) => {
       );
       const isOwnerValid = pr.repository.owner.login !== userData.user.login;
 
-      return isDateValid && isTopicValid && isOwnerValid;
+      const isPrValid = isDateValid && isTopicValid && isOwnerValid;
+
+      if (isPrValid) console.log("found valid pr", pr.title);
+
+      return isPrValid;
     });
 
+  console.log("found", pulls.length, "valid prs for", userData.user.login);
   await kv.set(["pulls", userId], { username: userData.user.login, pulls });
 
+  console.log(await kv.get(["pulls", userId]).then((e) => [e.key, e.value]));
+
   if (msg.nextTask) {
+    console.log("enqueuing next task", msg.nextTask);
     await kv.enqueue({ type: msg.nextTask, userId: msg.userId });
     return;
   }
 
+  console.log("enqueuing next fetch task");
   await kv.enqueue({ type: MessageTypes.FETCH_PRS, userId: msg.userId }, { delay: config.pullsFetchInterval });
+  console.log("done fetching prs for", msg.userId);
 };
